@@ -18,6 +18,8 @@ let main () =
 
   Printf.printf "r1 := 12\n%!";
   r1 := 12;
+  Printf.printf "r3 := 18\n%!";
+  r3 := 18;
 
   print_state "At t1               ";
   let t1 = Time.save () in
@@ -42,7 +44,7 @@ let main () =
   print_state "Before restore to t1";
   Time.restore t1;
   print_state "After  restore to t1";
-  check_eq (12, 42, 73);
+  check_eq (12, 42, 18);
 
   Printf.printf "r1 := 38\n%!";
   r1 := 38;
