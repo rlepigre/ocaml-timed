@@ -7,7 +7,7 @@ module Time =
 
     let save : unit -> t = fun () -> !current
 
-    let rollback : t -> unit =
+    let restore : t -> unit =
       let rec fn acc time =
         match time with
         | T {p = Some t} -> fn (time::acc) t
@@ -34,9 +34,9 @@ let decr : int ref -> unit = fun r -> r := !r - 1
 let pure_apply : ('a -> 'b) -> 'a -> 'b = fun f v ->
   let t = Time.save () in
   let r = f v in
-  Time.rollback t; r
+  Time.restore t; r
 
 let pure_test : ('a -> bool) -> 'a -> bool = fun f v ->
   let t = Time.save () in
   let r = f v in
-  if not r then Time.rollback t; r
+  if not r then Time.restore t; r

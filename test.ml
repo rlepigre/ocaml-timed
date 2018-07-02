@@ -25,9 +25,9 @@ let _ =
   Printf.printf "r2 := 43\n%!";
   r2 := 43;
 
-  print_state "Before rollback to t0";
-  Time.rollback t0;
-  print_state "After  rollback to t0";
+  print_state "Before restore to t0";
+  Time.restore t0;
+  print_state "After  restore to t0";
   check_eq (0, 42, 73);
 
   Printf.printf "r3 := 0\n%!";
@@ -39,15 +39,15 @@ let _ =
   Printf.printf "r1 := 42\n%!";
   r1 := 42;
 
-  print_state "Before rollback to t1";
-  Time.rollback t1;
-  print_state "After  rollback to t1";
+  print_state "Before restore to t1";
+  Time.restore t1;
+  print_state "After  restore to t1";
   check_eq (12, 42, 73);
 
   Printf.printf "r1 := 38\n%!";
   r1 := 38;
 
-  print_state "Before rollback to t2";
-  Time.rollback t2;
-  print_state "After  rollback to t2";
+  print_state "Before restore to t2";
+  Time.restore t2;
+  print_state "After  restore to t2";
   check_eq (0, 42, 0)
