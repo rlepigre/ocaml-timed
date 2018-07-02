@@ -1,16 +1,20 @@
 all: test
 
 test: timed.cmx test.ml
-	ocamlopt -o $@ $^
+	@echo "[OPT] $@"
+	@ocamlopt -o $@ $^
+	@./$@
 
 timed.cmi: timed.mli
-	ocamlopt -c $<
+	@echo "[OPT] $@"
+	@ocamlopt -c $<
 
 timed.cmx: timed.ml timed.cmi
-	ocamlopt -c $<
+	@echo "[OPT] $@"
+	@ocamlopt -c $<
 
 clean:
-	rm -f *.cmi *.cmx *.o
+	@rm -f *.cmi *.cmx *.o
 
 distclean: clean
-	rm -f *~ test
+	@rm -f *~ test
