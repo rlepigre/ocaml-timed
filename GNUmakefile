@@ -1,6 +1,11 @@
-all: test
+all: test test2
 
 test: timed.cmx tests/test.ml
+	@echo "[OPT] $@"
+	@ocamlopt -o $@ $^
+	@./$@
+
+test2: timed.cmx tests/test2.ml
 	@echo "[OPT] $@"
 	@ocamlopt -o $@ $^
 	@./$@
