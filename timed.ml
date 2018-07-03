@@ -16,24 +16,28 @@ module Time =
 
     type t = node
 
-    let current : edge ref = ref {d = None; u = []}
+    let current : node ref = ref { e = {d = None; u = []} }
     let count = ref 1
 
     let save : unit -> t =
       fun () ->
-        let e = { d = None; u = [] } in
-        let n = { e } in
-        !current.d <- Some n;
-        current := e;
-        incr count;
-        n
+        let c = !current in
+        assert (c.e.d = None);
+        if c.e.u = [] then c else
+          let e = { d = None; u = [] } in
+          let n = { e } in
+          c.e.d <- Some n;
+          current := n;
+          incr count;
+          n
 
     let restore : t -> unit =
       let rec gn acc e =
         (* Undo the references. *)
         List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
         match acc with
-        | []     -> current := e; e.d <- None; ignore (save ())
+        | []     -> let n = { e = { d = None; u = [] }} in
+                      e.d <- Some n; current := n
         | t::acc -> reverse t; gn acc t.e
       in
       let rec fn acc ({e} as time) =
@@ -52,7 +56,7 @@ module Time =
       let m = M {r; v = !!r} in
       r.contents <- v;
       if r.w <> !count then (
-         let e = !current in
+         let e = !current.e in
          e.u <-m :: e.u;
          r.w <- !count)
 
