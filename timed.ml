@@ -21,23 +21,28 @@ module Time =
 
     type t = node
 
-    let current : node ref = ref (loop ())
+    let current : node Weak.t = Weak.create 1
 
     let save : unit -> t =
       fun () ->
-        let c = !current in
+      match Weak.get current 1 with
+      | None ->
+         let n = loop () in
+         Weak.set current 1 (Some n);
+         n
+      | Some c ->
         assert (c.d == c);
         if c.u = [] then c else
           let n = loop () in
           c.d <- n;
-          current := n;
+          Weak.set current 1 (Some n);
           n
 
     let restore : t -> unit = fun t ->
       let rec gn acc t0 =
         (* Undo the references. *)
         match acc with
-        | []       ->  t0.d <- t0; t0. u <- []; current := t0; incr count;
+        | []       ->  t0.d <- t0; t0. u <- []; Weak.set current 1 (Some t0); incr count;
         | t::acc -> assert (t.d == t0); reverse t; gn acc t
       in
       let rec fn acc t =
@@ -53,14 +58,16 @@ module Time =
       }
 
     let (:=) : 'a tref -> 'a -> unit = fun r v ->
-      let m = M {r; v = !!r} in
+      begin
+        match Weak.get current 1, r.w <> !count with
+        | (Some c, true) ->
+           assert (c.d == c);
+           let m = M {r; v = !!r} in
+           c.u <-m :: c.u;
+           r.w <- !count
+        | _ -> ()
+      end;
       r.contents <- v;
-      if r.w <> !count then (
-        let c = !current in
-        assert (c.d == c);
-        c.u <-m :: c.u;
-        r.w <- !count)
-
   end
 
 type 'a ref = 'a Time.tref
