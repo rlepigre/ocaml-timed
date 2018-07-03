@@ -20,6 +20,12 @@ module Time :
     val restore : t -> unit
   end
 
+type 'a ref
+
+val (!) : 'a ref -> 'a
+
+val ref : 'a -> 'a ref
+
 (** [r := v] has the same effect as [Pervasives.(r := v)],  but the value that
     was stored in [r] before the update is recorded so that it may be restored
     by a subsequent call to [Time.restore]. *)

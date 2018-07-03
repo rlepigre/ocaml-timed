@@ -1,43 +1,70 @@
 module Time =
   struct
-    type edge = E : {mutable d : node; r : 'a ref; mutable v : 'a} -> edge
-    and  node = {mutable e : edge option}
+    type 'a tref = { mutable contents : 'a; w : edge Weak.t }
+    and memo = M : { r : 'a tref; mutable v : 'a } -> memo
+    and edge = {mutable d : node option; mutable u : memo list }
+    and  node = {mutable e : edge }
 
-    let reverse : node -> unit = fun ({e} as s) ->
-      match e with
-      | None                         -> assert false
-      | Some(E ({d;r;v} as rc) as e) ->
-          (* Undo the reference. *)
-          rc.v <- !r; r := v;
+    let (!!) r = r.contents
+
+    let reverse : node -> unit = fun s ->
+      match s.e.d with
+      | None -> assert false
+      | Some  d ->
+          (* Undo the references. *)
+          List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) s.e.u;
           (* Reverse the pointers. *)
-          d.e <- Some e; rc.d <- s
+          d.e <- s.e; s.e.d <- Some s
 
     type t = node
 
-    let current : t ref = ref {e = None}
+    let current : edge ref = ref {d = None; u = []}
 
     let save : unit -> t =
-      fun () -> !current
+      fun () ->
+        let e = { d = None; u = [] } in
+        let n = { e } in
+        !current.d <- Some n;
+        current := e;
+        n
 
     let restore : t -> unit =
       let rec gn acc t0 =
         match acc with
-        | []     -> current := t0; t0.e <- None
+        | []     -> current := t0.e; t0.e.d <- None
         | t::acc -> reverse t; gn acc t
       in
       let rec fn acc ({e} as time) =
-        match e with
+        match e.d with
         | None        -> gn acc time
-        | Some(E {d}) -> fn (time::acc) d
+        | Some d -> fn (time::acc) d
       in
       fn []
+
+    let ref x = {
+        contents = x;
+        w = Weak.create 1
+      }
+
+    let (:=) : 'a tref -> 'a -> unit = fun r v ->
+      let m = M {r; v = !!r} in
+      r.contents <- v;
+      match Weak.get r.w 0 with
+      | Some e when e == !current -> ()
+      | _ ->
+         let e = !current in
+         e.u <-m :: e.u;
+         Weak.set r.w 0 (Some e)
+
   end
 
-let (:=) : 'a ref -> 'a -> unit = fun r v ->
-  let open Time in
-  let n = {e = None} in
-  let e = E {d = n; r; v = !r} in
-  !current.e <- Some e; current := n; r := v
+type 'a ref = 'a Time.tref
+
+let ref = Time.ref
+
+let (!) =  Time.(!!)
+
+let (:=) = Time.(:=)
 
 let incr : int ref -> unit = fun r -> r := !r + 1
 let decr : int ref -> unit = fun r -> r := !r - 1
