@@ -11,8 +11,6 @@ module Time =
       match s.e.d with
       | None -> assert false
       | Some  d ->
-          (* Undo the references. *)
-          List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) s.e.u;
           (* Reverse the pointers. *)
           d.e <- s.e; s.e.d <- Some s
 
@@ -29,14 +27,16 @@ module Time =
         n
 
     let restore : t -> unit =
-      let rec gn acc t0 =
+      let rec gn acc e =
+        (* Undo the references. *)
+        List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
         match acc with
-        | []     -> current := t0.e; t0.e.d <- None
-        | t::acc -> reverse t; gn acc t
+        | []     -> current := e; e.d <- None
+        | t::acc -> reverse t; gn acc t.e
       in
       let rec fn acc ({e} as time) =
         match e.d with
-        | None        -> gn acc time
+        | None        -> gn acc e
         | Some d -> fn (time::acc) d
       in
       fn []
