@@ -1,6 +1,6 @@
 module Time =
   struct
-    type 'a tref = { mutable contents : 'a; w : edge Weak.t }
+    type 'a tref = { mutable contents : 'a; mutable w : int }
     and memo = M : { r : 'a tref; mutable v : 'a } -> memo
     and edge = {mutable d : node option; mutable u : memo list }
     and  node = {mutable e : edge }
@@ -17,6 +17,7 @@ module Time =
     type t = node
 
     let current : edge ref = ref {d = None; u = []}
+    let count = ref 1
 
     let save : unit -> t =
       fun () ->
@@ -24,6 +25,7 @@ module Time =
         let n = { e } in
         !current.d <- Some n;
         current := e;
+        incr count;
         n
 
     let restore : t -> unit =
@@ -43,18 +45,16 @@ module Time =
 
     let ref x = {
         contents = x;
-        w = Weak.create 1
+        w = 0
       }
 
     let (:=) : 'a tref -> 'a -> unit = fun r v ->
       let m = M {r; v = !!r} in
       r.contents <- v;
-      match Weak.get r.w 0 with
-      | Some e when e == !current -> ()
-      | _ ->
+      if r.w <> !count then (
          let e = !current in
          e.u <-m :: e.u;
-         Weak.set r.w 0 (Some e)
+         r.w <- !count)
 
   end
 
