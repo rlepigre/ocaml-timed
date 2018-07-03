@@ -33,6 +33,7 @@ timed.cma: timed.cmo
 .PHONY: tests
 tests: all
 	@ocaml -I . timed.cma tests/test.ml
+	@ocaml -I . timed.cma tests/test2.ml
 	@ocaml -I . timed.cma tests/example.ml
 
 # Installation.
