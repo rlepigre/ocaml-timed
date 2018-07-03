@@ -33,7 +33,7 @@ module Time =
         (* Undo the references. *)
         List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
         match acc with
-        | []     -> current := e; e.d <- None
+        | []     -> current := e; e.d <- None; ignore (save ())
         | t::acc -> reverse t; gn acc t.e
       in
       let rec fn acc ({e} as time) =
