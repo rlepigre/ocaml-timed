@@ -1,0 +1,8 @@
+name            = "timed"
+version         = "0.1"
+requires        = ""
+description     = "Timed references for imperative state"
+archive(byte)   = "timed.cma"
+plugin(byte)    = "timed.cma"
+archive(native) = "timed.cmxa"
+plugin(native)  = "timed.cmxs"

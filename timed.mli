@@ -1,6 +1,10 @@
 (** Timed references for imperative state. This module redefines the functions
     used to update references (i.e., values of type ['a ref]), and enables the
-    restoration of a saved state. *)
+    restoration of a saved state.
+
+    @author Christophe Raffalli
+    @author Rodolphe Lepigre
+    @version 0.1 *)
 
 (** The [Time] module provides an abstract representation of time, used to set
     a point from which (monitored) updates to references are recorded to allow
