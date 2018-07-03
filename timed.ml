@@ -44,10 +44,9 @@ module Time =
       in
       let rec fn acc t =
         let d = t.e.d in
-        if d == t then gn acc d
+        if d == t then (reverse d; gn acc d)
         else fn (t::acc) d
       in
-      ignore (save ());
       fn [] t
 
     let ref x = {
