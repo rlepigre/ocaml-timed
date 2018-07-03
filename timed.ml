@@ -3,23 +3,21 @@ module Time =
     type 'a tref = { mutable contents : 'a; mutable w : int }
     and memo = M : { r : 'a tref; mutable v : 'a } -> memo
     and edge = {mutable d : node; mutable u : memo list }
-    and  node = {mutable e : edge }
+    and  node = edge
 
     let count = ref 0
 
     let loop ()=
       incr count;
-      let rec n = { e } and e = { d = n; u = [] } in
-      n
+      let rec n = { d = n; u = [] } in n
 
     let (!!) r = r.contents
 
     let reverse : node -> unit = fun s ->
       (* Reverse the pointers. *)
-      let e = s.e in
-      let d = e.d in
-      List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
-      d.e <- e; e.d <- s
+      let d = s.d in
+      List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) s.u;
+      d.d <- s; d.u <- s.u
 
     type t = node
 
@@ -28,10 +26,10 @@ module Time =
     let save : unit -> t =
       fun () ->
         let c = !current in
-        assert (c.e.d == c);
-        if c.e.u = [] then c else
+        assert (c.d == c);
+        if c.u = [] then c else
           let n = loop () in
-          c.e.d <- n;
+          c.d <- n;
           current := n;
           n
 
@@ -39,11 +37,11 @@ module Time =
       let rec gn acc t0 =
         (* Undo the references. *)
         match acc with
-        | []       ->  t0.e <- { d = t0; u = [] }; current := t0; incr count;
-        | t::acc -> assert (t.e.d == t0); reverse t; gn acc t
+        | []       ->  t0.d <- t0; t0. u <- []; current := t0; incr count;
+        | t::acc -> assert (t.d == t0); reverse t; gn acc t
       in
       let rec fn acc t =
-        let d = t.e.d in
+        let d = t.d in
         if d == t then (reverse d; gn acc d)
         else fn (t::acc) d
       in
@@ -59,9 +57,8 @@ module Time =
       r.contents <- v;
       if r.w <> !count then (
         let c = !current in
-        let e = c.e in
-        assert (e.d == c);
-        e.u <-m :: e.u;
+        assert (c.d == c);
+        c.u <-m :: c.u;
         r.w <- !count)
 
   end
