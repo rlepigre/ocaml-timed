@@ -1,6 +1,6 @@
 all: test
 
-test: timed.cmx test.ml
+test: timed.cmx tests/test.ml
 	@echo "[OPT] $@"
 	@ocamlopt -o $@ $^
 	@./$@
@@ -15,6 +15,7 @@ timed.cmx: timed.ml timed.cmi
 
 clean:
 	@rm -f *.cmi *.cmx *.o
+	@rm -f tests/*.cmi tests/*.cmx tests/*.o
 
 distclean: clean
 	@rm -f *~ test
