@@ -2,50 +2,53 @@ module Time =
   struct
     type 'a tref = { mutable contents : 'a; mutable w : int }
     and memo = M : { r : 'a tref; mutable v : 'a } -> memo
-    and edge = {mutable d : node option; mutable u : memo list }
+    and edge = {mutable d : node; mutable u : memo list }
     and  node = {mutable e : edge }
+
+    let count = ref 0
+
+    let loop ()=
+      incr count;
+      let rec n = { e } and e = { d = n; u = [] } in
+      n
 
     let (!!) r = r.contents
 
     let reverse : node -> unit = fun s ->
-      match s.e.d with
-      | None -> assert false
-      | Some  d ->
-          (* Reverse the pointers. *)
-          d.e <- s.e; s.e.d <- Some s
+      (* Reverse the pointers. *)
+      let e = s.e in
+      let d = e.d in
+      List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
+      d.e <- e; e.d <- s
 
     type t = node
 
-    let current : node ref = ref { e = {d = None; u = []} }
-    let count = ref 1
+    let current : node ref = ref (loop ())
 
     let save : unit -> t =
       fun () ->
         let c = !current in
-        assert (c.e.d = None);
+        assert (c.e.d == c);
         if c.e.u = [] then c else
-          let e = { d = None; u = [] } in
-          let n = { e } in
-          c.e.d <- Some n;
+          let n = loop () in
+          c.e.d <- n;
           current := n;
-          incr count;
           n
 
-    let restore : t -> unit =
-      let rec gn acc e =
+    let restore : t -> unit = fun t ->
+      let rec gn acc t0 =
         (* Undo the references. *)
-        List.iter (fun (M({r;v} as rc)) -> rc.v <- !!r; r.contents <- v;) e.u;
         match acc with
-        | []     -> let n = { e = { d = None; u = [] }} in
-                      e.d <- Some n; current := n
-        | t::acc -> reverse t; gn acc t.e
+        | []       ->  t0.e <- { d = t0; u = [] }; current := t0; incr count;
+        | t::acc -> assert (t.e.d == t0); reverse t; gn acc t
       in
-      let rec fn acc ({e} as time) =
-        match e.d with
-        | None        -> gn acc e
-        | Some d -> fn (time::acc) d
+      let rec fn acc t =
+        let d = t.e.d in
+        if d == t then gn acc d
+        else fn (t::acc) d
       in
-      fn []
+      ignore (save ());
+      fn [] t
 
     let ref x = {
         contents = x;
@@ -56,9 +59,11 @@ module Time =
       let m = M {r; v = !!r} in
       r.contents <- v;
       if r.w <> !count then (
-         let e = !current.e in
-         e.u <-m :: e.u;
-         r.w <- !count)
+        let c = !current in
+        let e = c.e in
+        assert (e.d == c);
+        e.u <-m :: e.u;
+        r.w <- !count)
 
   end
 

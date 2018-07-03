@@ -1,6 +1,6 @@
 open Timed
 
-let nb_steps = 1_000_000
+let nb_steps = 10_000
 let nb_ref = 5
 let maxi = 5
 let proba_save = 0.2
