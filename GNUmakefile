@@ -21,6 +21,7 @@ timed.cmx: timed.ml timed.cmi
 clean:
 	@rm -f *.cmi *.cmx *.o
 	@rm -f tests/*.cmi tests/*.cmx tests/*.o
+	@rm -f test test2
 
 distclean: clean
 	@rm -f *~ test
