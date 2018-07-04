@@ -1,4 +1,4 @@
-all: timed.cmxa timed.cmxs timed.cma
+all: timed.cmxa timed.cmxs timed.cma doc
 
 # Compilation of the library.
 
@@ -38,7 +38,7 @@ tests: all
 
 # Documentation.
 
-doc: all
+doc:
 	@echo "[DOC] $@/index.html"
 	@mkdir -p doc
 	@ocamldoc -hide-warnings -d doc -html timed.mli
