@@ -6,11 +6,12 @@
     of {!module:Pervasives}).
 
     @author Christophe Raffalli
-    @author Rodolphe Lepigre
-    @version 0.1 *)
+    @author Rodolphe Lepigre *)
 
 (** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
-    two words of memory (against one for {!type:'a Pervasives.ref}). *)
+    two words of memory (against one for {!type:'a Pervasives.ref}). Note that
+    it is {b unsafe to marshall} elements of this type using functions of  the
+    the {!module:Marshal} module or {!val:Pervasives.output_value}. *)
 type 'a ref
 
 (** [ref v] creates a new reference holding the value [v]. This operation runs
