@@ -31,6 +31,9 @@ module Time =
        pointers *)
     let current : node Weak.t = Weak.create 1
 
+    let get_cur () = Weak.get current 0
+    let set_cur x = Weak.set current 0 x
+
     (* [reverse n] reverses the edge from [n] to [n.d] and undo all changes
         in [n.u]. [n.u]  is updated to allow "redo" *)
     let reverse : node -> unit = fun s ->
@@ -42,10 +45,10 @@ module Time =
     (* function returning the current time *)
     let save : unit -> t =
       fun () ->
-      match Weak.get current 1 with
+      match get_cur () with
       | None -> (* We just create a new node *)
          let n = loop () in
-         Weak.set current 1 (Some n);
+         set_cur (Some n);
          n
       | Some c ->
          assert (c.d == c);
@@ -53,7 +56,7 @@ module Time =
            (* if some undo are recorded, we need to create a node "after" these undo *)
            let n = loop () in
            c.d <- n;
-           Weak.set current 1 (Some n);
+           set_cur (Some n);
            n
 
     (* [restore t] restores the value of all pointer at time [t]. *)
@@ -69,7 +72,7 @@ module Time =
         match acc with
         | []       ->  assert (t0 == t);
                        (* t becomes the current time *)
-                       t0.d <- t0; t0. u <- []; Weak.set current 1 (Some t0); incr count;
+                       t0.d <- t0; t0. u <- []; set_cur (Some t0); incr count;
         | t::acc -> assert (t.d == t0);
                     (* we reverse the edge from t to t0, which performs the undo *)
                     reverse t; gn acc t
@@ -87,7 +90,7 @@ module Time =
         (* no need to store the old value if
             - the current time is not accessible (no saved time are accessible)
             - or [r] was already updated and its initial value is already stored *)
-        match Weak.get current 1, r.w <> !count with
+        match get_cur (), r.w <> !count with
         | (Some c, true) ->
            assert (c.d == c);
            (* we store the old value *)
