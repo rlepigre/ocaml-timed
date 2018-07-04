@@ -1,3 +1,4 @@
+.PHONY: all
 all: timed.cmxa timed.cmxs timed.cma doc
 
 # Compilation of the library.
@@ -58,9 +59,11 @@ uninstall:
 
 # Cleaning.
 
+.PHONY: clean
 clean:
 	@rm -f timed.cm[ixoa] timed.cmxa timed.cmxs timed.a timed.o
 
+.PHONY: distclean
 distclean: clean
 	@find . -name "*~" -exec rm {} \;
 	@rm -rf doc
