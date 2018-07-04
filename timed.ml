@@ -1,13 +1,20 @@
+(* Reference representation. *)
+type 'a ref =
+  { mutable contents : 'a
+  ; mutable last_uid : int }
+
+(* NOTE [last_uid] stores the unique identifier of the [node] (see below) that
+   contains the last update information for the reference.  It is used to only
+   store the first update to a reference in between two “snapshots”. *)
+
+(* Reference creation and access. *)
+let ref : 'a -> 'a ref = fun v -> {contents = v; last_uid = 0}
+let (!) : 'a ref -> 'a = fun r -> r.contents
+
 module Time =
   struct
-    (* a type similar to ervasives.ref. The field 'w' stores that time (an
-        int identifyinh the time returned by save) of the last update. The
-        idea is to store only the value before the first update between two
-        consecutive time *)
-    type 'a tref = { mutable contents : 'a; mutable w : int }
-
     (* memo is a GADT to store the previous value of a reference *)
-    type memo = M : { r : 'a tref; mutable v : 'a } -> memo
+    type memo = M : { r : 'a ref; mutable v : 'a } -> memo
 
     (* This is then main structure of or librarie, it is an oriented graph,
         whose nodes represent the time returned by save. Each node point to
@@ -18,12 +25,12 @@ module Time =
 
     (* a counter to associate an integer to each node. We do not need to store
         the integer in the node. *)
-    let count = ref 0
+    let count = Pervasives.ref 0
 
     (* Creation of a new node for the current time. The current time is characterised
         by a loop that stores the latest update. *)
     let loop ()=
-      incr count;
+      Pervasives.incr count;
       let rec n = { d = n; u = [] } in n
 
     (* the current time is a weak point, because if no saved time are
@@ -72,55 +79,44 @@ module Time =
         match acc with
         | []       ->  assert (t0 == t);
                        (* t becomes the current time *)
-                       t0.d <- t0; t0. u <- []; set_cur (Some t0); incr count;
+                       t0.d <- t0; t0. u <- []; set_cur (Some t0);
+                       Pervasives.incr count;
         | t::acc -> assert (t.d == t0);
                     (* we reverse the edge from t to t0, which performs the undo *)
                     reverse t; gn acc t
       in fn [] t
 
-    (* referece creation *)
-    let ref x = {
-        contents = x;
-        w = 0
-      }
-
     (* update *)
-    let (:=) : 'a tref -> 'a -> unit = fun r v ->
+    let (:=) : 'a ref -> 'a -> unit = fun r v ->
       begin
         (* no need to store the old value if
             - the current time is not accessible (no saved time are accessible)
             - or [r] was already updated and its initial value is already stored *)
-        match get_cur (), r.w <> !count with
+        match get_cur (), r.last_uid <> Pervasives.(!count) with
         | (Some c, true) ->
            assert (c.d == c);
            (* we store the old value *)
            let m = M {r; v = r.contents} in
            c.u <-m :: c.u;
            (* we store the information that r was updated at the current time *)
-           r.w <- !count
+           r.last_uid <- Pervasives.(!count)
         | _ -> ()
       end;
       (* and we do the update! *)
       r.contents <- v;
   end
 
-type 'a ref = 'a Time.tref
+(* Reference update. *)
+let (:=) : 'a ref -> 'a -> unit = Time.(:=)
 
-let ref = Time.ref
-
-let (!) r =  Time.(r.contents)
-
-let (:=) = Time.(:=)
-
+(* Derived functions. *)
 let incr : int ref -> unit = fun r -> r := !r + 1
 let decr : int ref -> unit = fun r -> r := !r - 1
 
 let pure_apply : ('a -> 'b) -> 'a -> 'b = fun f v ->
   let t = Time.save () in
-  let r = f v in
-  Time.restore t; r
+  let r = f v in Time.restore t; r
 
 let pure_test : ('a -> bool) -> 'a -> bool = fun f v ->
   let t = Time.save () in
-  let r = f v in
-  if not r then Time.restore t; r
+  let r = f v in if not r then Time.restore t; r
