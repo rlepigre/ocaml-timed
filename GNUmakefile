@@ -38,10 +38,10 @@ tests: all
 
 # Documentation.
 
-doc:
+doc: timed.mli
 	@echo "[DOC] $@/index.html"
 	@mkdir -p doc
-	@ocamldoc -hide-warnings -d doc -html timed.mli
+	@ocamldoc -hide-warnings -charset utf-8 -d doc -html timed.mli
 
 # Installation.
 
