@@ -46,61 +46,64 @@ module Time =
        to setting the corresponding node to be the root of the tree (reversing
        the pointers, and undoing the updates in the process). *)
 
-    (* a counter to associate an integer to each node. We do not need to store
-        the integer in the node. *)
+    (* NOTE [current] is either empty,  or it contains a [node] that points to
+       itself (i.e., a loop), that stores the latest updates. *)
+
+    (* Counter used to associate a unique identifier to each node. *)
     let count = Pervasives.ref 0
 
-    (* Creation of a new node for the current time. The current time is characterised
-        by a loop that stores the latest update. *)
-    let loop ()=
-      Pervasives.incr count;
-      let rec n = { d = n; u = [] } in n
+    (* NOTE We do not need to store the unique identifier in the node. *)
 
-    (* [reverse n] reverses the edge from [n] to [n.d] and undo all changes
-        in [n.u]. [n.u]  is updated to allow "redo" *)
+    (* [reverse s] reverses the edge going from [s] to [s.d], applies the undo
+       operations represented by [s.u], and updates [s.u] to enable redo. *)
     let reverse : node -> unit = fun s ->
-      (* Reverse the pointers. *)
-      let d = s.d in
-      List.iter (fun (M({r;v} as rc)) -> rc.v <- r.contents; r.contents <- v;) s.u;
-      d.d <- s; d.u <- s.u
+      let d = s.d in (* Destination node. *)
+      let undo (M({r;v} as rc)) = rc.v <- r.contents; r.contents <- v in
+      List.iter undo s.u; d.d <- s; d.u <- s.u
 
-    (* function returning the current time *)
+    (* Returns the current “time” (which is a [node]), in which the subsequent
+       reference updates will be stored until a call to [restore],  or another
+       call to [save]. This new node becomes the root. *)
     let save : unit -> t = fun () ->
       match get_current () with
-      | None -> (* We just create a new node *)
-         let n = loop () in
-         set_current n;
-         n
-      | Some c ->
-         assert (c.d == c);
-         if c.u = [] then c else
-           (* if some undo are recorded, we need to create a node "after" these undo *)
-           let n = loop () in
-           c.d <- n;
-           set_current n;
-           n
+      | None                  ->
+          (* Empty graph, just create a root node (points to itself). *)
+          let rec n = {d = n; u = []} in
+          Pervasives.incr count;
+          set_current n; n
+      | Some(c) when c.u = [] ->
+          (* No updates since previous save, so we can use the same node. *)
+          assert (c.d == c); c
+      | Some(c)               ->
+          (* Updates were saved in previous node, create a new root. *)
+          assert (c.d == c);
+          let rec n = { d = n; u = [] } in
+          Pervasives.incr count;
+          c.d <- n; set_current n; n
 
     (* [restore t] restores the value of all pointer at time [t]. *)
     let restore : t -> unit = fun t ->
-      (* fn builds the path from [t] to the current time and call gn *)
-      let rec fn acc t =
+      (* Undoes the references along the given path. *)
+      let rec gn path t0 =
+        match path with
+        | []      ->
+            (* [t0] becomes the current time. *)
+            assert (t0 == t);
+            t0.d <- t0; t0. u <- []; set_current t0;
+            Pervasives.incr count
+        | t::path ->
+            (* We reverse the edge from [t] to [t0] (preforms the undo). *)
+            assert (t.d == t0);
+            reverse t; gn path t
+      in
+      (* Builds the path from [t] to the current time, and calls [gn]. *)
+      let rec fn path t =
         let d = t.d in
-        if d == t then (reverse d; gn acc d)
-        else fn (t::acc) d
-      (* gn really do the undo *)
-      and  gn acc t0 =
-        (* Undo the references. *)
-        match acc with
-        | []       ->  assert (t0 == t);
-                       (* t becomes the current time *)
-                       t0.d <- t0; t0. u <- []; set_current t0;
-                       Pervasives.incr count;
-        | t::acc -> assert (t.d == t0);
-                    (* we reverse the edge from t to t0, which performs the undo *)
-                    reverse t; gn acc t
+        if d == t then (reverse d; gn path d) else fn (t::path) d
       in fn [] t
 
-    (* Reference update. *)
+    (* Reference update. Information for rollback is stored in the root [node]
+       (if any), which corresponds to the last saved “time”. *)
     let (:=) : 'a ref -> 'a -> unit = fun r v ->
       begin
         (* No need to store the previous value if it has already been updated
