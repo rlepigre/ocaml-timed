@@ -1,4 +1,4 @@
-all: timed.cmxa timed.cmxs timed.cma
+all: timed.cmxa timed.cmxs timed.cma doc
 
 # Compilation of the library.
 
@@ -36,6 +36,13 @@ tests: all
 	@ocaml -I . timed.cma tests/test2.ml
 	@ocaml -I . timed.cma tests/example.ml
 
+# Documentation.
+
+doc: timed.mli
+	@echo "[DOC] $@/index.html"
+	@mkdir -p doc
+	@ocamldoc -hide-warnings -charset utf-8 -d doc -html timed.mli
+
 # Installation.
 
 INSTALLED = timed.cmxa timed.cmxs timed.cma timed.a timed.o timed.cmi \
@@ -56,3 +63,4 @@ clean:
 
 distclean: clean
 	@find . -name "*~" -exec rm {} \;
+	@rm -rf doc

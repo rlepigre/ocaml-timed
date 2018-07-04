@@ -1,66 +1,74 @@
-(** Timed references for imperative state. This module redefines the functions
-    used to update references (i.e., values of type ['a ref]), and enables the
-    restoration of a saved state.
+(** Timed references for imperative state. This module provides an alternative
+    type for references (or mutable cells) supporting undo/redo operations. In
+    particular, an abstract notion of time is used to capture the state of the
+    references at any given point, so that it can be restored. Note that usual
+    reference operations only have a constant time overhead (compared to those
+    of {!module:Pervasives}).
 
     @author Christophe Raffalli
     @author Rodolphe Lepigre
     @version 0.1 *)
 
+(** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
+    two words of memory (against one for {!type:'a Pervasives.ref}). *)
+type 'a ref
+
+(** [ref v] creates a new reference holding the value [v]. This operation runs
+    in constant time, and has a very small (even negligible) overhead compared
+    to {!val:Pervasives.ref}. *)
+val ref : 'a -> 'a ref
+
+(** [!r] returns the current value of [r]. This operation is constant time and
+    has a negligible overhead compared to {!val:Pervasives.(!)}. *)
+val (!) : 'a ref -> 'a
+
+(** [r := v] sets the value of the reference [r] to [v].  This operation has a
+    very small overhead compared to {!val:Pervasives.(:=)} if no time has been
+    saved with {!val:Time.save}. Nonetheless, it is always constant time. *)
+val (:=) : 'a ref -> 'a -> unit
+
+(** [incr r] is equivalent to [r := !r + 1]. *)
+val incr : int ref -> unit
+
+(** [decr r] is equivalent to [r := !r - 1]. *)
+val decr : int ref -> unit
+
 (** The [Time] module provides an abstract representation of time, used to set
-    a point from which (monitored) updates to references are recorded to allow
-    undoing/redoing the corresponding changes. *)
+    a point from which updates to references are recorded to allow undoing (of
+    redoing) the corresponding changes. *)
 module Time :
   sig
     (** Point in the “timeline” of the program's execution. *)
     type t
 
     (** [save ()] registers the position of the program in its “timeline”. The
-        returned value can then be used to “time-travel” toward this point.
-        in O(1) *)
+        returned value can then be used to “time-travel” toward this point, by
+        calling {!val:restore}. The saving operation runs in constant time. *)
     val save : unit -> t
 
     (** [restore t] has the effect of “traveling in time” towards a previously
-        recorded point [t]. After calling this function, (monitored) reference
-        updates made between [t] and the “time before the call” are undone.
-
-     Complexity: O(MT) when
-     - M: maximum number of references updated between two consecutive
-       save (the number of references, not the number of updates, hence,
-       is one update the same reference several time, it does not count)
-     - T: number of saved time between t and the current time.
-
-      A better complexity is the sum of all M_i for i in 0 to n-1 where t_i are the
-      time between t = t_0 and the current time t_n and M_i are the number of
-      updated references between t_i and t_(i+1).
-     *)
+        recorded point [t]. After calling this function, the reference updates
+        made between [t] and the “time before the call” are undone.  Note that
+        this is the only basic operation that is not constant time. Complexity
+        is discussed below. *)
     val restore : t -> unit
+
+    (** The complexity of {!val:restore} is O(MT), where
+          - M is the maximum number of different references that were updated
+            between two consecutive callls to {!val:save}.
+          - T is the number of saved time between t and the current time.
+
+        A better expression of its complexity is “Σ Mₖtₖ” for 0 ≤ k < n, where
+        tₖ is the k-th saved time between t = t₀ and the current time tₙ,  and
+        Mₖ is the number  of different updated references between the times tₖ
+        and tₖ₊₁. *)
   end
 
-type 'a ref
-
-(** reference access in O(1) *)
-val (!) : 'a ref -> 'a
-
-(** reference construction in O(1) *)
-val ref : 'a -> 'a ref
-
-(** [r := v] has the same effect as [Pervasives.(r := v)],  but the value that
-    was stored in [r] before the update is recorded so that it may be restored
-    by a subsequent call to [Time.restore]. in O(1) *)
-val (:=) : 'a ref -> 'a -> unit
-
-(** [incr r] increments the integer stored in [r],  recording the old value so
-    that it can be resotred by a subsequent call to [Time.restore]. *)
-val incr : int ref -> unit
-
-(** [decr r] is similar to [incr r], but it decrements the integer. *)
-val decr : int ref -> unit
-
-(** [pure_apply f v] computes the result of [f v], but reverts the (monitored)
-    updates made to references in the process before returning the value. *)
+(** [pure_apply f v] computes the result of [f v],  but reverts the updates to
+    references before returning the value. *)
 val pure_apply : ('a -> 'b) -> 'a -> 'b
 
 (** [pure_test p v] applies the predicate [p] to [v] (i.e., compute [p v]) and
-    returns the result, reverting (monitored) updates made to reference if the
-    result is [false]. Updates are preserved if the result is [true]. *)
+    returns the result,  reverting the updates made to reference if the result
+    is [false]. Updates are preserved if the result is [true]. *)
 val pure_test : ('a -> bool) -> 'a -> bool
