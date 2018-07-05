@@ -134,4 +134,4 @@ let pure_test : ('a -> bool) -> 'a -> bool = fun f v ->
   let t = Time.save () in
   let r = f v in if not r then Time.restore t; r
 
-let unsafe_reset r = r.last_uid <- 0
+let unsafe_reset : 'a ref -> unit = fun r -> r.last_uid <- 0

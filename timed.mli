@@ -14,7 +14,8 @@
 (** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
     three words of memory, while {!type:'a Pervasives.ref} uses two. Note that
     it is {b unsafe to marshal}  elements of this type using functions of  the
-    {!module:Marshal} module or {!val:Pervasives.output_value}. *)
+    {!module:Marshal} module or {!val:Pervasives.output_value}. In fact, it is
+    possible to work around this limitation with {!val:unsafe_reset}. *)
 type 'a ref
 
 (** [ref v] creates a new reference holding the value [v]. This operation runs
@@ -95,7 +96,13 @@ val pure_apply : ('a -> 'b) -> 'a -> 'b
     is [false]. Updates are preserved if the result is [true]. *)
 val pure_test : ('a -> bool) -> 'a -> bool
 
-(** [unsafe_reset r] must be apply when you marshal  value of type  [Timed.ref]
-    (at marshalling or  unmarshalling,  but before any update).  This allows to
-    keep sharing and consider the reference as it is were just created. *)
+(** [unsafe_reset r] can be used to work around the marshaling limitations. In
+    fact, there is no problem marshaling data structures containing references
+    (i.e., values of type {!type:'a ref}). However,  unmarshaling such a value
+    will leave it in an inconsistent state with respect to the library. Hence,
+    it is {b absolutely necessary} to call [unsafe_reset] on every element  of
+    type {!type:'a ref} in an unmarshaled value. Doing so will make the system
+    believe that the reference has just been created. Note that [unsafe_reset]
+    {b should not be used in any other situation}, and especially if the given
+    [r] has already been updated with {!val:(:=)}. *)
 val unsafe_reset : 'a ref -> unit
