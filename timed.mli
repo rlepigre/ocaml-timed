@@ -13,7 +13,7 @@
 
 (** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
     three words of memory, while {!type:'a Pervasives.ref} uses two. Note that
-    it is {b unsafe to marshall} elements of this type using functions of  the
+    it is {b unsafe to marshal}  elements of this type using functions of  the
     {!module:Marshal} module or {!val:Pervasives.output_value}. *)
 type 'a ref
 
@@ -94,3 +94,8 @@ val pure_apply : ('a -> 'b) -> 'a -> 'b
     returns the result,  reverting the updates made to reference if the result
     is [false]. Updates are preserved if the result is [true]. *)
 val pure_test : ('a -> bool) -> 'a -> bool
+
+(** [unsafe_reset r] must be apply when you marshal  value of type  [Timed.ref]
+    (at marshalling or  unmarshalling,  but before any update).  This allows to
+    keep sharing and consider the reference as it is were just created. *)
+val unsafe_reset : 'a ref -> unit
