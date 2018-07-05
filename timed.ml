@@ -72,12 +72,12 @@ module Time =
           Pervasives.incr count;
           set_current n; n
       | Some(c) when c.u = [] ->
-          (* No updates since previous save, so we can use the same node. *)
+          (* No updates since previous save, we can use the same node. *)
           assert (c.d == c); c
       | Some(c)               ->
           (* Updates were saved in previous node, create a new root. *)
           assert (c.d == c);
-          let rec n = { d = n; u = [] } in
+          let rec n = {d = n; u = []} in
           Pervasives.incr count;
           c.d <- n; set_current n; n
 
