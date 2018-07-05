@@ -22,7 +22,7 @@ make install
 The command `make` automatically produces the (`ocamldoc` format)
 documentation, which contains the same information as `timed.mli`.
 It can be visualized by opening the file `doc/index.html` using a
-web browsed.
+web browser.
 
 Example
 -------
