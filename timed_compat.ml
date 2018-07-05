@@ -3,12 +3,14 @@ module Time =
     (* Type used to store the previous value of a reference. *)
     type memo = M : {r : 'a ref; mutable v : 'a} -> memo
 
+    let dummy_memo : memo = M {r = ref 0; v = 0}
+
     (* The main data structure is an oriented graph that is held by one of its
        nodes, and stored on the OCaml heap. This means that parts of the graph
        that are not accessible (in terms of pointers) can be collected, and we
        can consider that they are not part of the graph. Every node contains a
        destination node [d], and a previous value [f] for reference [r]. *)
-    type node = {mutable d : node; mutable u : memo list}
+    type node = {mutable d : node; mutable u : memo}
     type t = node
 
     (* NOTE We require the in-memory graph to be either empty, or to be a tree
@@ -41,24 +43,24 @@ module Time =
     let reverse : node -> unit = fun s ->
       let d = s.d in (* Destination node. *)
       let undo (M({r;v} as rc)) = rc.v <- !r; r := v in
-      List.iter undo s.u; d.d <- s; d.u <- s.u
+      undo s.u; d.d <- s; d.u <- s.u
 
     (* Returns the current “time” (which is a [node]), in which the subsequent
        reference updates will be stored until a call to [restore],  or another
        call to [save]. This new node becomes the root. *)
     let save : unit -> t = fun () ->
       match get_current () with
-      | None                  ->
+      | None                           ->
           (* Empty graph, just create a root node (points to itself). *)
-          let rec n = {d = n; u = []} in
+          let rec n = {d = n; u = dummy_memo} in
           set_current n; n
-      | Some(c) when c.u = [] ->
+      | Some(c) when c.u == dummy_memo ->
           (* No updates since previous save, we can use the same node. *)
           assert (c.d == c); c
-      | Some(c)               ->
+      | Some(c)                        ->
           (* Updates were saved in previous node, create a new root. *)
           assert (c.d == c);
-          let rec n = {d = n; u = []} in
+          let rec n = {d = n; u = dummy_memo} in
           c.d <- n; set_current n; n
 
     (* [restore t] restores the value of all pointer at time [t]. *)
@@ -69,7 +71,7 @@ module Time =
         | []      ->
             (* [t0] becomes the current time. *)
             assert (t0 == t);
-            t0.d <- t0; t0.u <- []; set_current t0
+            t0.d <- t0; t0.u <- dummy_memo; set_current t0
         | t::path ->
             (* We reverse the edge from [t] to [t0] (preforms the undo). *)
             assert (t.d == t0);
@@ -89,7 +91,9 @@ module Time =
         | None    -> () (* Current time not accessible, no need to save. *)
         | Some(c) ->
             assert (c.d == c); (* Check that the root points to itself. *)
-            c.u <- M {r; v = !r} :: c.u (* Save the old value. *)
+            if c.u == dummy_memo then c.u <- M {r; v = !r} else
+            let rec n = {d = n; u = M {r; v = !r}} in
+            c.d <- n; set_current n
       end;
       r := v (* Actual update. *)
   end
