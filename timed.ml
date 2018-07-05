@@ -89,7 +89,7 @@ module Time =
         | []      ->
             (* [t0] becomes the current time. *)
             assert (t0 == t);
-            t0.d <- t0; t0. u <- []; set_current t0;
+            t0.d <- t0; t0.u <- []; set_current t0;
             Pervasives.incr count
         | t::path ->
             (* We reverse the edge from [t] to [t0] (preforms the undo). *)
