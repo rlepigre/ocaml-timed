@@ -5,8 +5,13 @@ OCAMLOPT  = ocamlopt
 OCAMLDOC  = ocamldoc -html -charset utf-8
 OCAMLFIND = ocamlfind
 
+LIBFILES  = timed.cmxa timed.cmxs timed.cma timed.a timed.o timed.cmi \
+						timed.cmx timed_compat.cmxa timed_compat.cmxs timed_compat.cma \
+						timed_compat.a timed_compat.o timed_compat.cmi timed_compat.cmx \
+						timed.mli timed_compat.mli META 
+
 .PHONY: all
-all: timed.cmxa timed.cmxs timed.cma doc
+all: $(LIBFILES) doc
 
 # Compilation of the library.
 
@@ -36,6 +41,32 @@ timed.cma: timed.cmo
 	@echo "[BYT] $@"
 	@$(OCAMLC) -a -o $@ $^
 
+timed_compat.cmi: timed_compat.mli
+	@echo "[OPT] $@"
+	@$(OCAMLOPT) -c $<
+
+timed_compat.o: timed_compat.cmx
+timed_compat.cmx: timed_compat.ml timed_compat.cmi
+	@echo "[OPT] $@"
+	@$(OCAMLOPT) -c $<
+
+timed_compat.a: timed_compat.cmxa
+timed_compat.cmxa: timed_compat.cmx
+	@echo "[OPT] $@"
+	@$(OCAMLOPT) -a -o $@ $^
+
+timed_compat.cmxs: timed_compat.cmx
+	@echo "[OPT] $@"
+	@$(OCAMLOPT) -shared -o $@ $^
+
+timed_compat.cmo: timed_compat.ml timed_compat.cmi
+	@echo "[BYT] $@"
+	@$(OCAMLC) -c $<
+
+timed_compat.cma: timed_compat.cmo
+	@echo "[BYT] $@"
+	@$(OCAMLC) -a -o $@ $^
+
 # Tests.
 
 .PHONY: tests
@@ -43,10 +74,13 @@ tests: all
 	@$(OCAML) -I . timed.cma tests/test.ml
 	@$(OCAML) -I . timed.cma tests/test2.ml
 	@$(OCAML) -I . timed.cma tests/example.ml
+	@$(OCAML) -I . timed_compat.cma tests/test_compat.ml
+	@$(OCAML) -I . timed_compat.cma tests/test2_compat.ml
+	@$(OCAML) -I . timed_compat.cma tests/example_compat.ml
 
 # Documentation.
 
-doc: timed.mli
+doc: timed.mli timed_compat.mli
 	@echo "[DOC] $@/index.html"
 	@mkdir -p doc
 	@$(OCAMLDOC) -hide-warnings -d $@ -html $^
@@ -54,21 +88,29 @@ doc: timed.mli
 # Installation.
 
 META:
-	@echo "name            = \"timed\""                                  > $@
-	@echo "version         = \"$(VERSION)\""                            >> $@
-	@echo "requires        = \"\""                                      >> $@
-	@echo "description     = \"Timed references for imperative state\"" >> $@
-	@echo "archive(byte)   = \"timed.cma\""                             >> $@
-	@echo "plugin(byte)    = \"timed.cma\""                             >> $@
-	@echo "archive(native) = \"timed.cmxa\""                            >> $@
-	@echo "plugin(native)  = \"timed.cmxs\""                            >> $@
-
-INSTALLED = timed.cmxa timed.cmxs timed.cma timed.a timed.o timed.cmi \
-						timed.cmx META 
+	@echo "[GEN] $@ (version $(VERSION))"
+	@echo "name            = \"timed\""                                    > $@
+	@echo "version         = \"$(VERSION)\""                              >> $@
+	@echo "requires        = \"\""                                        >> $@
+	@echo "description     = \"Timed references for imperative state\""   >> $@
+	@echo "archive(byte)   = \"timed.cma\""                               >> $@
+	@echo "plugin(byte)    = \"timed.cma\""                               >> $@
+	@echo "archive(native) = \"timed.cmxa\""                              >> $@
+	@echo "plugin(native)  = \"timed.cmxs\""                              >> $@
+	@echo ""                                                              >> $@
+	@echo "package \"compat\" ("                                          >> $@
+	@echo "  version         = \"$(VERSION)\""                            >> $@
+	@echo "  requires        = \"\""                                      >> $@
+	@echo "  description     = \"Timed references compatibility module\"" >> $@
+	@echo "  archive(byte)   = \"timed_compat.cma\""                      >> $@
+	@echo "  plugin(byte)    = \"timed_compat.cma\""                      >> $@
+	@echo "  archive(native) = \"timed_compat.cmxa\""                     >> $@
+	@echo "  plugin(native)  = \"timed_compat.cmxs\""                     >> $@
+	@echo ")"                                                             >> $@
 
 .PHONY: install
-install: $(INSTALLED) uninstall
-	@$(OCAMLFIND) install timed $(INSTALLED)
+install: $(LIBFILES) uninstall
+	@$(OCAMLFIND) install timed $(LIBFILES)
 
 .PHONY: uninstall
 uninstall:
@@ -84,7 +126,7 @@ release: distclean
 
 .PHONY: clean
 clean:
-	@rm -f timed.cm[ixoa] timed.cmxa timed.cmxs timed.a timed.o
+	@rm -f *.cm[ixoa] *.cmxa *.cmxs *.a *.o
 
 .PHONY: distclean
 distclean: clean
