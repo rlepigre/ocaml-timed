@@ -9,7 +9,7 @@
     @author Rodolphe Lepigre *)
 
 (** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
-    two words of memory (against one for {!type:'a Pervasives.ref}). Note that
+    three words of memory (against two for {!type:'a Pervasives.ref}). Note that
     it is {b unsafe to marshall} elements of this type using functions of  the
     the {!module:Marshal} module or {!val:Pervasives.output_value}. *)
 type 'a ref
