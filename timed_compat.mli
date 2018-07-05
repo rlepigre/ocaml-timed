@@ -3,8 +3,7 @@
     restoration of a saved state.
 
     @author Christophe Raffalli
-    @author Rodolphe Lepigre
-    @version 0.1 *)
+    @author Rodolphe Lepigre *)
 
 (** The [Time] module provides an abstract representation of time, used to set
     a point from which (monitored) updates to references are recorded to allow
