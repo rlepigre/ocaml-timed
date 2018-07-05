@@ -5,13 +5,15 @@
     @author Christophe Raffalli
     @author Rodolphe Lepigre *)
 
-(** Note that this module allocates two blocks of memory at initialization for
-    its internal state. They occupy a total of four words. *)
+(** Note that this module allocates one blocks of memory at initialization for
+    its internal state. It occupies a total of four words. *)
 
-(** [r := v] has the same effect as [Pervasives.(r := v)],  but the value that
-    was stored in [r] before the update is recorded so that it may be restored
-    by a subsequent call to {!val:Time.restore}. This is done in constant time
-    and three blocks of memory are allocated (for a total of eight words). *)
+(** [r := v] sets the value of the reference [r] to [v].  This operation has a
+    very small overhead compared to {!val:Pervasives.(:=)} if no time has been
+    saved with {!val:Time.save}. Nonetheless, it is always constant time. Note
+    that this function does not perform any memory allocation, except when the
+    current “time” is accessible (or has not been collected). When that is the
+    case, three blocks of memory are allocated, for a total of eight words. *)
 val (:=) : 'a ref -> 'a -> unit
 
 (** [incr r] is equivalent to [r := !r + 1]. *)
@@ -29,8 +31,12 @@ module Time :
     type t
 
     (** [save ()] registers the position of the program in its “timeline”. The
-        returned value can then be used to “time-travel” toward this point. No
-        allocation is performed, and this operation is constant time. *)
+        returned value can then be used to “time-travel” toward this point, by
+        calling {!val:restore}. The saving operation runs in constant time. In
+        the process one block of memory of three words is allocated. Note that
+        two consecutive calls to [save] (i.e., with no interleaved {!val:(:=)}
+        or {!val:restore}) return the same value,  and the second one does not
+        allocate any memory. *)
     val save : unit -> t
 
     (** [restore t] has the effect of “traveling in time” towards a previously

@@ -7,7 +7,7 @@ module Time =
        nodes, and stored on the OCaml heap. This means that parts of the graph
        that are not accessible (in terms of pointers) can be collected, and we
        can consider that they are not part of the graph. Every node contains a
-       destination node [d], and a previous value [f] for reference [r]. *)
+       destination node [d], and undo information [u]. *)
     type node = {mutable d : node; mutable u : memo option}
     type t = node
 
@@ -37,7 +37,7 @@ module Time =
        itself (i.e., a loop), that stores the latest updates. *)
 
     (* [reverse s] reverses the edge going from [s] to [s.d], applies the undo
-       operations represented by [s.u], and updates [s.u] to enable redo. *)
+       operation represented by [s.u], and updates [s.u] to enable redo. *)
     let reverse : node -> unit = fun s ->
       let d = s.d in (* Destination node. *)
       let undo (M({r;v} as rc)) = rc.v <- !r; r := v in
