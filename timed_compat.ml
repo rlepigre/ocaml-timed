@@ -31,14 +31,17 @@ module Time =
         | Some(E {d}) -> fn (time::acc) d
       in
       fn []
+
+    let (:=) : 'a ref -> 'a -> unit = fun r v ->
+      let n = {e = None} in
+      let e = E {d = n; r; v = !r} in
+      !current.e <- Some e; current := n; r := v
   end
 
-let (:=) : 'a ref -> 'a -> unit = fun r v ->
-  let open Time in
-  let n = {e = None} in
-  let e = E {d = n; r; v = !r} in
-  !current.e <- Some e; current := n; r := v
+(* Reference update. *)
+let (:=) : 'a ref -> 'a -> unit = Time.(:=)
 
+(* Derived functions. *)
 let incr : int ref -> unit = fun r -> r := !r + 1
 let decr : int ref -> unit = fun r -> r := !r - 1
 
