@@ -74,6 +74,12 @@ install: $(INSTALLED) uninstall
 uninstall:
 	@$(OCAMLFIND) remove timed
 
+.PHONY: release
+release: distclean
+	git push origin
+	git tag -a ocaml-timed_$(VERSION)
+	git push origin ocaml-timed_$(VERSION)
+
 # Cleaning.
 
 .PHONY: clean
