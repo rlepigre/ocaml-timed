@@ -46,5 +46,5 @@ let _ =
   r1 := 17;
 
   Time.restore t2;
-  assert(!r1 = 73 && !r2 = 42);
+  assert(!r1 = 73 && !r2 = 42)
 ```

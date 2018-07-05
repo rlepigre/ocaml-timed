@@ -77,6 +77,7 @@ tests: all
 	@$(OCAML) -I . timed_compat.cma tests/test_compat.ml
 	@$(OCAML) -I . timed_compat.cma tests/test2_compat.ml
 	@$(OCAML) -I . timed_compat.cma tests/example_compat.ml
+	@echo "[TST] All good!"
 
 # Documentation.
 
@@ -118,9 +119,10 @@ uninstall:
 
 .PHONY: release
 release: distclean
-	git push origin
-	git tag -a ocaml-timed_$(VERSION)
-	git push origin ocaml-timed_$(VERSION)
+	@echo "[TAG] ocaml-timed_$(VERSION)"
+	@git push origin
+	@git tag -a ocaml-timed_$(VERSION)
+	@git push origin ocaml-timed_$(VERSION)
 
 # Cleaning.
 
