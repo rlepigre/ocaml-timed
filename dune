@@ -1,0 +1,11 @@
+(library
+ (name timed)
+ (public_name timed)
+ (wrapped false)
+ (modules timed))
+
+(library
+ (name timed_compat)
+ (public_name timed.compat)
+ (wrapped false)
+ (modules timed_compat))

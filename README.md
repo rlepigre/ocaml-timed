@@ -5,24 +5,17 @@ This minimal library allows the encapsulation of reference updates
 in an abstract notion of state. It can be used to emulate a pure
 interface while working with references.
 
-
 **Authors:** Rodolphe Lepigre & Christophe Raffalli
 
 Installation
 ------------
 
-The library has no dependency, but it requires `ocamlfind` for
-installation. You can use the following commands to compile and
-install.
+The library has no dependency, but it is built using `dune`. You can use the
+following commands to compile and install.
 ```bash
 make
 make install
 ```
-
-The command `make` automatically produces the (`ocamldoc` format)
-documentation, which contains the same information as `timed.mli`.
-It can be visualized by opening the file `doc/index.html` using a
-web browser.
 
 Example
 -------

@@ -1,11 +1,3 @@
+_build/
+_opam/
 *~
-*.cmi
-*.cmo
-*.cmx
-*.cma
-*.cmxa
-*.cmxs
-*.o
-*.a
-doc/
-META

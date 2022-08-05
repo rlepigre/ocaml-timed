@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  THE
 SOFTWARE.
 *****************************************************************************)
 
-(** Timed references for {!type:'a Pervasives.ref}.  This module redefines the
+(** Timed references for {!type:Stdlib.ref}. This module redefines the all the
     functions used to update references,  and enables the restoration of saved
     reference states.
 
@@ -33,11 +33,11 @@ SOFTWARE.
     its internal state. It occupies a total of four words. *)
 
 (** [r := v] sets the value of the reference [r] to [v].  This operation has a
-    very small overhead compared to {!val:Pervasives.(:=)} if no time has been
-    saved with {!val:Time.save}. Nonetheless, it is always constant time. Note
-    that this function does not perform any memory allocation, except when the
-    current “time” is accessible (or has not been collected). When that is the
-    case, three blocks of memory are allocated, for a total of eight words. *)
+    very small overhead compared to {!val:Stdlib.(:=)} if no time has been via
+    {!val:Time.save}. Nonetheless, it is always constant time,  and allocation
+    is only necessary if the current “time” is accessible (or not reclaimed by
+    the garbage-collector). When that is the case,  three blocks of memory are
+    allocated, for a total of eight words. *)
 val (:=) : 'a ref -> 'a -> unit
 
 (** [incr r] is equivalent to [r := !r + 1]. *)

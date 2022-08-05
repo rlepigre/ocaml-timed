@@ -1,0 +1,9 @@
+(tests
+ (names example test test2)
+ (modules example test test2)
+ (libraries timed))
+
+(tests
+ (names example_compat test_compat test2_compat)
+ (modules example_compat test_compat test2_compat)
+ (libraries timed.compat))

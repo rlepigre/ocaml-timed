@@ -74,7 +74,7 @@ module Time =
        itself (i.e., a loop), that stores the latest updates. *)
 
     (* Counter used to associate a unique identifier to each node. *)
-    let count = Pervasives.ref 0
+    let count = Stdlib.ref 0
 
     (* NOTE We do not need to store the unique identifier in the node. *)
 
@@ -93,7 +93,7 @@ module Time =
       | None                  ->
           (* Empty graph, just create a root node (points to itself). *)
           let rec n = {d = n; u = []} in
-          Pervasives.incr count;
+          Stdlib.incr count;
           set_current n; n
       | Some(c) when c.u = [] ->
           (* No updates since previous save, we can use the same node. *)
@@ -102,7 +102,7 @@ module Time =
           (* Updates were saved in previous node, create a new root. *)
           assert (c.d == c);
           let rec n = {d = n; u = []} in
-          Pervasives.incr count;
+          Stdlib.incr count;
           c.d <- n; set_current n; n
 
     (* [restore t] restores the value of all pointer at time [t]. *)
@@ -114,7 +114,7 @@ module Time =
             (* [t0] becomes the current time. *)
             assert (t0 == t);
             t0.d <- t0; t0.u <- []; set_current t0;
-            Pervasives.incr count
+            Stdlib.incr count
         | t::path ->
             (* We reverse the edge from [t] to [t0] (preforms the undo). *)
             assert (t.d == t0);
@@ -132,13 +132,13 @@ module Time =
       begin
         (* No need to store the previous value if it has already been updated
            inside the same node. *)
-        if r.last_uid <> Pervasives.(!count) then
+        if r.last_uid <> Stdlib.(!count) then
         match get_current () with
         | None    -> () (* Current time not accessible, no need to save. *)
         | Some(c) ->
             assert (c.d == c); (* Check that the root points to itself. *)
             c.u <- M {r; v = r.contents} :: c.u; (* Save the old value. *)
-            r.last_uid <- Pervasives.(!count) (* Last set at current time. *)
+            r.last_uid <- Stdlib.(!count) (* Last set at current time. *)
       end;
       r.contents <- v (* Actual update. *)
   end

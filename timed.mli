@@ -27,7 +27,7 @@ SOFTWARE.
     particular, an abstract notion of time is used to capture the state of the
     references at any given point, so that it can be restored. Note that usual
     reference operations only have a constant time / memory overhead (compared
-    to those of {!module:Pervasives}).
+    to those of {!module:Stdlib}).
 
     @author Christophe Raffalli
     @author Rodolphe Lepigre *)
@@ -35,26 +35,26 @@ SOFTWARE.
 (** Note that this module allocates two blocks of memory at initialization for
     its internal state. They occupy a total of six words. *)
 
-(** Type of references similar to {!type:'a Pervasives.ref}. Note that it uses
-    three words of memory, while {!type:'a Pervasives.ref} uses two. Note that
+(** Type of references similar to {!type:Stdlib.ref}.  Note that it uses three
+    words of memory, while {!type:Stdlib.ref} uses two. Importantly, note that
     it is {b unsafe to marshal}  elements of this type using functions of  the
-    {!module:Marshal} module or {!val:Pervasives.output_value}. In fact, it is
-    possible to work around this limitation with {!val:unsafe_reset}. *)
+    {!module:Marshal} module or {!val:Stdlib.output_value}.  It is possible to
+    work around this limitation using {!val:unsafe_reset}. *)
 type 'a ref
 
 (** [ref v] creates a new reference holding the value [v]. This operation runs
     in constant time, and has a very small (even negligible) overhead compared
-    to {!val:Pervasives.ref}. This function only allocates one block of memory
-    of three words (against two for {!type:'a Pervasives.ref}). *)
+    to {!val:Stdlib.ref}. This function allocates one block of memory of three
+    words (against two for {!type:Stdlib.ref}). *)
 val ref : 'a -> 'a ref
 
 (** [!r] returns the current value of [r]. This operation is constant time and
-    has a negligible overhead compared to {!val:Pervasives.(!)}.  Moreover, it
-    does not perform any memory allocation. *)
+    has a negligible overhead compared to {!val:Stdlib.(!)}. Moreover, it does
+    not perform any memory allocation. *)
 val (!) : 'a ref -> 'a
 
 (** [r := v] sets the value of the reference [r] to [v].  This operation has a
-    very small overhead compared to {!val:Pervasives.(:=)} if no time has been
+    very small overhead compared to {!val:Stdlib.(:=)} when no time  has  been
     saved with {!val:Time.save}. Nonetheless, it is always constant time. Note
     that this function does not perform any memory allocation, except when the
     current “time” is accessible (or has not been collected) and [r] is  being
@@ -122,10 +122,10 @@ val pure_test : ('a -> bool) -> 'a -> bool
 
 (** [unsafe_reset r] can be used to work around the marshaling limitations. In
     fact, there is no problem marshaling data structures containing references
-    (i.e., values of type {!type:'a ref}). However,  unmarshaling such a value
+    (i.e.,  values of type {!type:ref}).  However,  unmarshaling such a  value
     will leave it in an inconsistent state with respect to the library. Hence,
     it is {b absolutely necessary} to call [unsafe_reset] on every element  of
-    type {!type:'a ref} in an unmarshaled value. Doing so will make the system
+    type {!type:ref} in an unmarshaled value.  Doing so will make  the  system
     believe that the reference has just been created. Note that [unsafe_reset]
     {b should not be used in any other situation}, and especially if the given
     [r] has already been updated with {!val:(:=)}. *)
